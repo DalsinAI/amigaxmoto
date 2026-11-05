@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <errno.h>
 
 // read the .h to understand why i redefine SDLNet_TCP_Send
-#if !defined(WIN32) && !defined(__APPLE__)
+#if !defined(WIN32) && !defined(__APPLE__) && !defined(__amigaos__)
 #include <sys/socket.h>
 
 #define SOCKET int

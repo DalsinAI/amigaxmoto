@@ -45,18 +45,30 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define DEFAULT_LANGUAGE ""
 #define DEFAULT_THEME CONFIGURE_DEFAULT_THEME
 #define DEFAULT_WEBROOM_ID "1"
+#if defined(__amigaos__)
+#define DEFAULT_WEBCONFATINIT false /* AmigaOS 3: see AMIGA_PORT.md */
+#else
 #define DEFAULT_WEBCONFATINIT true
+#endif
 #define DEFAULT_PROFILE ""
 #define DEFAULT_VERBOSE false
 #define DEFAULT_RESOLUTION_WIDTH 800
 #define DEFAULT_RESOLUTION_HEIGHT 600
+#if defined(__amigaos__)
+#define DEFAULT_MAXRENDERFPS 30 /* AmigaOS 3: see AMIGA_PORT.md */
+#else
 #define DEFAULT_MAXRENDERFPS 50
+#endif
 #define DEFAULT_WINDOWED true
 #define DEFAULT_USETHEMECURSOR true
 #define DEFAULT_GLEXTS true
 #define DEFAULT_GLVOBS true
 #define DEFAULT_DRAWLIB "OPENGL"
+#if defined(__amigaos__)
+#define DEFAULT_WWW false /* AmigaOS 3: see AMIGA_PORT.md */
+#else
 #define DEFAULT_WWW true
+#endif
 #define DEFAULT_WWW_PASSWORD ""
 #define DEFAULT_BENCHMARK false
 #define DEFAULT_DEBUG false
@@ -95,12 +107,24 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define DEFAULT_MULTISCENES true
 #define DEFAULT_ENABLECONTEXTHELP true
 #define DEFAULT_ENABLEAUDIO true
+#if defined(__amigaos__)
+#define DEFAULT_AUDIOSAMPLERATE 22050 /* AmigaOS 3: see AMIGA_PORT.md */
+#else
 #define DEFAULT_AUDIOSAMPLERATE 44100
+#endif
 #define DEFAULT_AUDIOSAMPLEBITS 16
 #define DEFAULT_AUDIOCHANNELS 2
 #define DEFAULT_ENABLEAUDIOENGINE true
+#if defined(__amigaos__)
+#define DEFAULT_CHECKNEWLEVELSATSTARTUP false /* AmigaOS 3: see AMIGA_PORT.md */
+#else
 #define DEFAULT_CHECKNEWLEVELSATSTARTUP true
+#endif
+#if defined(__amigaos__)
+#define DEFAULT_CHECKNEWHIGHSCORESATSTARTUP false /* AmigaOS 3: see AMIGA_PORT.md */
+#else
 #define DEFAULT_CHECKNEWHIGHSCORESATSTARTUP true
+#endif
 #define DEFAULT_SHOWHIGHSCOREINGAME true
 #define DEFAULT_SHOWNEXTMEDALINGAME false
 #define DEFAULT_NBROOMSENABLED 1
@@ -131,7 +155,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define DEFAULT_GHOSTTRAILRENDERING false
 #define DEFAULT_ENABLEJOYSTICKS false
 #define DEFAULT_BEATINGMODE false
+#if defined(__amigaos__)
+#define DEFAULT_WEBFORMS false /* AmigaOS 3: see AMIGA_PORT.md */
+#else
 #define DEFAULT_WEBFORMS true
+#endif
 #define DEFAULT_PROXY_PORT -1
 #define DEFAULT_PROXY_TYPE ""
 #define DEFAULT_PROXY_SERVER ""

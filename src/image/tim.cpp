@@ -32,7 +32,7 @@
 /*==============================================================================
   BAD BAD BAD
   ==============================================================================*/
-#if !defined(WIN32)
+#if !defined(WIN32) && !defined(__amigaos__) /* libnix has stricmp() */
 static int stricmp(const char *pc1, const char *pc2) {
   int s1 = strlen(pc1);
   int s2 = strlen(pc2);

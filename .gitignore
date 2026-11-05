@@ -52,3 +52,6 @@ CTestTestfile.cmake
 ## Nix
 
 /result*
+
+# AmigaOS 3 port: the packaged drawer (make -f amiga/Makefile.amigaos)
+/dist/

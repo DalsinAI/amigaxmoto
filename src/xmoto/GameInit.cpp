@@ -100,6 +100,11 @@ BOOL LibraryOK(STRPTR libname, ULONG version, ULONG revision) {
 }
 #endif
 
+#if defined(__amigaos__)
+/* SDL2.module leaves empty screens open after a full-screen window */
+extern "C" void amiga_screens_close_leftovers(void);
+#endif
+
 int main(int nNumArgs, char **ppcArgs) {
 #ifdef __amigaos4__
   /* checking for MiniGL 2.0 */
@@ -122,6 +127,9 @@ int main(int nNumArgs, char **ppcArgs) {
 
     printf("fatal exception : %s\n", e.getMsg().c_str());
     SDL_Quit(); /* make sure SDL shuts down gracefully */
+#if defined(__amigaos__)
+    amiga_screens_close_leftovers();
+#endif
 
 #if defined(WIN32)
     char cBuf[1024];
@@ -273,8 +281,8 @@ void GameApp::run_load(int nNumArgs, char **ppcArgs) {
     v_useGraphics = false;
   }
 
-// doesn't work on windows
-#if !defined(WIN32)
+// doesn't work on windows (nor on AmigaOS 3: no sigaction, and no server)
+#if !defined(WIN32) && !defined(__amigaos__)
   if (v_xmArgs.isOptServerOnly()) {
     struct sigaction v_act;
 
@@ -1069,6 +1077,9 @@ void GameApp::run_unload() {
 
   /* Shutdown SDL */
   SDL_Quit();
+#if defined(__amigaos__)
+  amiga_screens_close_leftovers();
+#endif
 
   XMLDocument::clean();
 

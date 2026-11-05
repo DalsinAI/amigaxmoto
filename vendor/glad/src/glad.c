@@ -683,6 +683,21 @@ void close_gl(void) {
         libGL = NULL;
     }
 }
+#elif defined(__amigaos__)
+/* AmigaOS 3: no dlopen; GL is linked in (libGL.a), and X-Moto loads it
+   through SDL_GL_GetProcAddress, so gladLoadGL() has nothing to open. */
+static void* libGL;
+typedef void* (APIENTRYP PFNGLXGETPROCADDRESSPROC_PRIVATE)(const char*);
+static PFNGLXGETPROCADDRESSPROC_PRIVATE gladGetProcAddressPtr;
+
+static
+int open_gl(void) {
+    return 0;
+}
+
+static
+void close_gl(void) {
+}
 #else
 #include <dlfcn.h>
 static void* libGL;
@@ -745,6 +760,8 @@ void* get_proc(const char *namez) {
     if(result == NULL) {
 #if defined(_WIN32) || defined(__CYGWIN__)
         result = (void*)GetProcAddress((HMODULE) libGL, namez);
+#elif defined(__amigaos__)
+        (void)namez;
 #else
         result = dlsym(libGL, namez);
 #endif

@@ -1,0 +1,131 @@
+# X-Moto for AmigaOS 3.x, 68040/68060 + FPU, on OpenGPU's SDL 2 and GL.
+#
+#   make -f amiga/Makefile.amigaos -j2 \
+#        STOVE=/path/to/openamigagcc-16.2.0-open4 \
+#        NDK=/path/to/OpenNDK/Include_H SDL2KIT=/path/to/opengpu-sdk \
+#        DEPS=/path/to/m68k-amigaos
+#
+# STOVE is GFOpenAmigaGCC 16.2.0-open4 or later. SDL2KIT is the OpenGPU
+# developer kit: libSDL2.a, libSDL2_mixer.a, libSDL2_ttf.a and libGL.a (the
+# program's halves of LIBS:OpenGPU/SDL2.module, SDL2_mixer.module and
+# GL.module). DEPS holds the Team's cross-built static libraries (libxml2,
+# sqlite3, libpng, IJG jpeg, zlib: /mnt/amigachrome/team2/deps/
+# build-m68k-libs.sh makes them). X-Moto's own vendor/ libraries (ODE,
+# libccd, chipmunk, Lua, bzip2, md5sum, glad) are built in. No curl, no
+# SDL_net, no gettext: see AMIGA_PORT.md.
+# Output: dist/XMoto/ (the program, data/xmoto.bin packed from bin/, the
+# music and fonts beside it, userdata/, ReadMe, COPYING.txt) and
+# dist/XMoto.info.
+
+STOVE   ?= $(HOME)/CradleLab/toolchain/openamigagcc-16.2.0-open4-x86_64-linux
+NDK     ?= $(HOME)/CradleLab/gfopensdk/OpenNDK/Include_H
+SDL2KIT ?= /mnt/amigachrome/team2/deps/opengpu-sdk
+DEPS    ?= /mnt/amigachrome/team2/deps/m68k-amigaos
+PYTHON  ?= python3
+CC      = $(STOVE)/bin/m68k-amigaos-gcc
+CXX     = $(STOVE)/bin/m68k-amigaos-g++
+STRIP   = $(STOVE)/bin/m68k-amigaos-strip
+CPU     ?= -m68040 -m68881
+# -fno-tree-loop-distribute-patterns: GCC 16's loop miscompile (the kit's
+# sdl2-config gives it for GCC 16 too).
+OPT     ?= -O2 -fomit-frame-pointer -fno-tree-loop-distribute-patterns
+
+# What src/CMakeLists.txt defines, for this build: OpenGL on, the SDL_gfx
+# renderer off (it is SDL 1.2's and does not build), no gettext, big-endian.
+DEFS    = -D__amigaos__ -DUSE_OPENGL=1 -DUSE_SDLGFX=0 -DUSE_GETTEXT=0 \
+          -DALLOW_DEV=0 -DBUILD_MACOS_BUNDLE=0 -DXMOTO_BIG_ENDIAN=1 \
+          -DHAVE_PUTENV=1 -DHAVE_SETENV=1 -DMS_MKDIR=0 -DSVN_REV=\"git\" \
+          -DCONFIGURE_DEFAULT_THEME=\"Classic\" \
+          -DASIAN_TTF_FILE=\"PROGDIR:data/Textures/Fonts/bkai00mp.ttf\" \
+          -DdDOUBLE
+VINC    = -Ivendor/bzip2 -Ivendor/chipmunk -Ivendor/glad/include \
+          -Ivendor/libccd/include -Ivendor/lua/lua -Ivendor/md5sum/include \
+          -Ivendor/ode/include -Ivendor/xdgbasedir/include
+INC     = -Iamiga/include -Isrc $(VINC) -I$(SDL2KIT)/include \
+          -I$(SDL2KIT)/include/SDL2 -I$(DEPS)/include -I$(DEPS)/include/libxml2
+COMMON  = -noixemul $(OPT) $(CPU) $(DEFS)
+# Upstream's files build with the compiler's default warnings (upstream's
+# CMake adds no -Wall) and -fpermissive, as upstream builds them; the
+# port's own files in amiga/ with -Wall -Wextra.
+CXXFLAGS = $(COMMON) -std=gnu++11 -fpermissive -include amiga/include/amiga_prelude.h $(INC)
+CFLAGS   = $(COMMON) $(INC)
+AMIGAWARN = -Wall -Wextra
+LDFLAGS = -noixemul $(CPU)
+LIBS    = -L$(DEPS)/lib -L$(SDL2KIT)/lib -lxml2 -lsqlite3 -lpng -ljpeg -lz \
+          -lSDL2_mixer -lSDL2_ttf -lSDL2 -lGL -lamiga -lm
+BUILD   = build/amigaos
+OBJDIR  = $(BUILD)/obj
+DIST    = dist
+OUT     = $(DIST)/XMoto
+PROG    = XMoto
+
+# As src/CMakeLists.txt builds xmoto with USE_OPENGL and without
+# USE_SDLGFX: every source but the SDL_gfx renderer and Windows' timer.
+XSRC    = $(filter-out src/drawlib/DrawLibSDLgfx.cpp src/helpers/HighPrecisionTimerWin32.cpp, \
+            $(wildcard src/*/*.cpp src/*/*/*.cpp src/*/*/*/*.cpp))
+# vendor/*/CMakeLists.txt, as upstream builds them (Lua, bzip2 and the
+# XDG library from vendor/, as on Windows).
+VSRC_C  = $(wildcard vendor/bzip2/*.c vendor/chipmunk/*.c vendor/libccd/src/*.c \
+            vendor/md5sum/src/*.c vendor/xdgbasedir/src/*.c vendor/glad/src/*.c) \
+          $(filter-out vendor/lua/lua/lua.c vendor/lua/lua/luac.c, $(wildcard vendor/lua/lua/*.c)) \
+          vendor/ode/src/fastdot.c vendor/ode/src/fastldlt.c vendor/ode/src/fastlsolve.c \
+          vendor/ode/src/fastltsolve.c vendor/ode/src/nextafterf.c
+ODESRC  = $(shell sed -n 's/^ *\(src\/[a-z_\/0-9]*\.cpp\)$$/vendor\/ode\/\1/p' vendor/ode/CMakeLists.txt)
+VSRC_CXX = $(wildcard vendor/md5sum/src/*.cpp) $(ODESRC)
+ASRC    = amiga/amiga_screens.c amiga/amiga_glu.c amiga/sdlnet_stub.c \
+          amiga/stack.c amiga/pthread_stubs.c
+
+OBJS    = $(patsubst %,$(OBJDIR)/%.o,$(basename $(XSRC) $(VSRC_C) $(VSRC_CXX) $(ASRC)))
+
+ICONS   = $(wildcard amiga/icons/*.info)
+
+all: $(OUT)/$(PROG) package
+
+$(BUILD)/$(PROG).debug: $(OBJS)
+	@mkdir -p $(dir $@)
+	$(CXX) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+
+$(OUT)/$(PROG): $(BUILD)/$(PROG).debug | $(OUT)
+	$(STRIP) -o $@ $<
+
+$(BUILD)/xmoto.bin: bin/package.lst amiga/tools/pack_xmoto_bin.py
+	@mkdir -p $(dir $@)
+	$(PYTHON) amiga/tools/pack_xmoto_bin.py bin $@
+
+# As upstream installs it on Windows: xmoto.bin, and the music and fonts
+# beside it as files (they are not in package.lst).
+package: $(OUT)/$(PROG) $(BUILD)/xmoto.bin $(ICONS) AMIGA_PORT.md COPYING
+	mkdir -p $(OUT)/data/Textures $(OUT)/userdata
+	cp $(BUILD)/xmoto.bin $(OUT)/data/
+	rm -rf $(OUT)/data/Textures/Musics $(OUT)/data/Textures/Fonts
+	cp -R bin/Textures/Musics bin/Textures/Fonts $(OUT)/data/Textures/
+	cp AMIGA_PORT.md $(OUT)/ReadMe
+	cp COPYING $(OUT)/COPYING.txt
+	cp amiga/icons/XMoto.info amiga/icons/ReadMe.info amiga/icons/COPYING.txt.info $(OUT)/
+	cd $(OUT) && find . -mindepth 1 -type d | while read d; do cp $(CURDIR)/amiga/icons/Data.info "$$d.info"; done
+	cp amiga/icons/XMoto-drawer.info $(DIST)/XMoto.info
+
+$(OBJDIR)/amiga/%.o: amiga/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(AMIGAWARN) -I$(NDK) -c -o $@ $<
+
+$(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+objs: $(OBJS)
+
+$(OUT):
+	mkdir -p $@
+
+clean:
+	rm -rf $(BUILD)
+
+distclean: clean
+	rm -rf $(DIST)
+
+.PHONY: all package objs clean distclean
