@@ -79,7 +79,13 @@ OBJS    = $(patsubst %,$(OBJDIR)/%.o,$(basename $(XSRC) $(VSRC_C) $(VSRC_CXX) $(
 
 ICONS   = $(wildcard amiga/icons/*.info)
 
-all: $(OUT)/$(PROG) package
+all: $(OUT)/$(PROG) package $(DIST)/SQLiteTest
+
+# The SQLite build on its own, for the lab: amiga/tests/sqlite_test.c.
+$(DIST)/SQLiteTest: amiga/tests/sqlite_test.c $(DEPS)/lib/libsqlite3.a
+	@mkdir -p $(dir $@)
+	$(CC) -noixemul $(OPT) $(CPU) $(AMIGAWARN) -I$(DEPS)/include -o $@ $< \
+	  -L$(DEPS)/lib -lsqlite3 -lamiga -lm
 
 $(BUILD)/$(PROG).debug: $(OBJS)
 	@mkdir -p $(dir $@)

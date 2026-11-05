@@ -62,10 +62,19 @@ input and the window are SDL 2's, unchanged.
   (sh /mnt/amigachrome/team2/deps/build-m68k-libs.sh zlib|png|jpeg|sqlite|xml2,
   one at a time, -j2): zlib 1.3.1, libpng 1.6.43, IJG jpeg 9f, SQLite
   3.46.1 and libxml2 2.12.9 (parser and tree only). SQLite has its own
-  small file system for libnix (amiga_vfs.c: POSIX file calls, no locking,
-  temporary files in T:) and thread-safe mutexes on Exec signal
-  semaphores (sqlite3_amiga.c), because X-Moto writes its statistics and
-  counts level packs from SDL threads with their own connections.
+  file system on dos.library (amiga_vfs.c: Open/Read/Write/Seek/
+  SetFileSize, with Seek()'s old-position answer and SetFileSize()'s
+  new-size answer taken as they are, zeros written where a file grows,
+  SQLite's file locks kept in memory for all of the program's
+  connections, temporary files in T:) and thread-safe mutexes on Exec
+  signal semaphores (sqlite3_amiga.c), because X-Moto writes its
+  statistics and counts level packs from SDL threads with their own
+  connections. The first version, on libnix's POSIX calls with no locks,
+  left xm.db as 24 bytes of garbage ("file is not a database").
+- dist/SQLiteTest (amiga/tests/sqlite_test.c) tests that SQLite on its
+  own: `SQLiteTest [DIR]` (T: by default) creates a database, inserts,
+  reads back through a second connection, checks the header, a BUSY
+  write, integrity_check, VACUUM and reopening; it ends PASS or FAIL.
 - No GLU in the kit: amiga/amiga_glu.c has the two GLU calls X-Moto makes
   (gluScaleImage, nearest pixel; gluBuild2DMipmaps, box-filtered levels),
   amiga/include/GL/glu.h declares them.
@@ -170,7 +179,8 @@ Known limits, and what a tester should check
 
 1. It starts: the GL window opens, the main menu draws with its textures
    and fonts, the menu music plays.
-2. The first start's level database build finishes (SQLite on the Amiga
+2. SQLiteTest PASSes (in T: and in the drawer: SQLiteTest PROGDIR:).
+   The first start's level database build finishes (SQLite on the Amiga
    VFS, libxml2), and a second start is quick (xm.db and LCache reused).
 3. A level plays: the bike moves, the physics (ODE/chipmunk) hold up,
    the frame rate (softpipe will be slow; AmigaChrome's virgl should not).
