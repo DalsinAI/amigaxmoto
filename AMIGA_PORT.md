@@ -7,7 +7,13 @@ xmoto/fix-msys2", 27 August 2025; GPL 2 or later), the 2D motocross
 platform game, for AmigaOS 3.2 on a 68040 or 68060 with an FPU, on
 OpenGPU's SDL 2 and OpenGL.
 
-Status: builds and links; not yet run in the lab.
+Status: lab-tested (Instance-45, an emulated 68040 with an FPU, 5 November
+2026): the first start builds the level database, a new profile is made,
+the tutorial level plays (the bike, the physics, the dirt), and the game
+quits cleanly from the pause menu and from the main menu. The game's
+clock ran at about a tenth of real time there. The first run leaves about
+21 MB of Fast RAM in use (the OpenGPU modules stay loaded); a second run
+gives back all but 80 bytes. Pictures: docs/screenshots/.
 
 
 What you need
