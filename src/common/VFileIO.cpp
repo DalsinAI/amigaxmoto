@@ -113,12 +113,20 @@ std::string win32_getPWDDir(bool i_asUtf8 = false) {
 std::string getPWDDir(bool i_asUtf8 = false) {
 #ifdef WIN32
   return win32_getPWDDir(i_asUtf8);
+#elif defined(__amigaos__)
+  /* no PWD here: the current directory's full name */
+  char v_cwd[1024];
+  if (getcwd(v_cwd, sizeof(v_cwd)) == NULL) {
+    return std::string("");
+  }
+  return std::string(v_cwd);
 #else
   return std::string(getenv("PWD"));
 #endif
 }
 
-#if !defined(WIN32) && !defined(__MORPHOS__) && !defined(__amigaos4__)
+#if !defined(WIN32) && !defined(__MORPHOS__) && !defined(__amigaos4__) && \
+  !defined(__amigaos__) /* libnix has strlwr() */
 void strlwr(char *pc) {
   for (unsigned int i = 0; i < strlen(pc); i++)
     pc[i] = tolower(pc[i]);
@@ -922,6 +930,13 @@ std::string XMFS::getFileDir(const std::string &Path) {
   if (n < 0)
     n = Path.find_last_of("\\");
   if (n < 0) {
+#if defined(__amigaos__)
+    /* "PROGDIR:name": the parent is the volume or assign itself */
+    std::string::size_type v_colon = Path.find(':');
+    if (v_colon != std::string::npos) {
+      return Path.substr(0, v_colon + 1);
+    }
+#endif
     /* No directory info */
     return std::string(".");
   }
@@ -1002,6 +1017,13 @@ bool XMFS::isPathAbsolute(const std::string &Path) {
     if (isalpha(Path.at(0)) && Path.at(1) == ':' &&
         (Path.at(2) == '\\' || Path.at(2) == '/'))
       return true;
+  }
+#endif
+
+#if defined(__amigaos__)
+  /* AmigaDOS: a volume, device or assign name (PROGDIR:, Work:, T:) */
+  if (Path.find(':') != std::string::npos) {
+    return true;
   }
 #endif
 
@@ -1209,7 +1231,7 @@ void XMFS::init(const std::string &AppDir,
     }
   }
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__amigaos__)
   // xdg
   if ((m_xdgHd = (xdgHandle *)malloc(sizeof(xdgHandle))) == NULL) {
     throw Exception("xdgbasedir allocation failed");
@@ -1271,7 +1293,7 @@ void XMFS::init(const std::string &AppDir,
   } else {
     throw Exception("invalid process directory");
   }
-#elif defined(__MORPHOS__) || defined(__amigaos4__)
+#elif defined(__MORPHOS__) || defined(__amigaos4__) || defined(__amigaos__)
   if (v_mod_userCustomDirPath != "") {
     m_UserDataDir = v_mod_userCustomDirPath;
     m_UserDataDirUTF8 = v_mod_userCustomDirPathUtf8;
@@ -1279,6 +1301,11 @@ void XMFS::init(const std::string &AppDir,
     m_UserCacheDir = v_mod_userCustomDirPath;
   } else {
     m_UserDataDir = "PROGDIR:userdata"; /*getenv("HOME");*/
+#if defined(__amigaos__)
+    /* AmigaOS 3: made beside the program the first time */
+    if (!isDir(m_UserDataDir))
+      mkDir(m_UserDataDir.c_str());
+#endif
     if (!isDir(m_UserDataDir))
       throw Exception("invalid user home directory");
 
@@ -1508,6 +1535,10 @@ void XMFS::init(const std::string &AppDir,
 
   m_isInitialized = true;
 
+#if defined(__amigaos__)
+  /* no $HOME/.xmoto of older versions to migrate from */
+  v_requireMigration = false;
+#endif
   /* migrate old files if required */
   if (v_requireMigration) {
     /*

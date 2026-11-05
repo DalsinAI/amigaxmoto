@@ -108,7 +108,7 @@ std::string System::getMemoryInfo() {
   std::string v_res;
 
 // note that apple don't know getline
-#if defined(WIN32) || defined(__APPLE__)
+#if defined(WIN32) || defined(__APPLE__) || defined(__amigaos__)
   return "No available information";
 #else
   // grep -E '^Vm' /proc/2532/status

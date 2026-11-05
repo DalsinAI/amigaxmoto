@@ -44,9 +44,19 @@ enum ZonePrimType { LZPT_BOX = 1 };
 
 /* IMPORTANT: This structure must be kept as is, otherwise replays will
      be broken! */
+/* Replays keep these raw (byte-swapped to little-endian), at the PC's
+   layout: 44 bytes, the floats at 4-byte offsets. The 68k aligns a float to
+   2 bytes, which would make it 42 and misread every PC replay, so on
+   AmigaOS the first float is aligned as on the PC (checked below). */
+#if defined(__amigaos__)
+#define XM_PC_ALIGN4 __attribute__((aligned(4)))
+#else
+#define XM_PC_ALIGN4
+#endif
+
 struct SerializedBikeState {
   unsigned char cFlags; /* State flags */
-  float fGameTime; /* Game time */
+  float fGameTime XM_PC_ALIGN4; /* Game time */
   float fFrameX, fFrameY; /* Frame position */
   float fMaxXDiff, fMaxYDiff; /* Addressing space around the frame */
 
@@ -63,6 +73,17 @@ struct SerializedBikeState {
   signed char cLowerBodyX, cLowerBodyY; /* Ass position */
   signed char cKneeX, cKneeY; /* Knee position */
 };
+
+#if defined(__amigaos__)
+#include <cstddef>
+static_assert(sizeof(SerializedBikeState) == 44, "replay state size");
+static_assert(offsetof(SerializedBikeState, fGameTime) == 4, "replay layout");
+static_assert(offsetof(SerializedBikeState, nRearWheelRot) == 24,
+              "replay layout");
+static_assert(offsetof(SerializedBikeState, cBikeEngineRPM) == 30,
+              "replay layout");
+static_assert(offsetof(SerializedBikeState, cKneeY) == 42, "replay layout");
+#endif
 
 /* controls */
 enum PlayerControl {

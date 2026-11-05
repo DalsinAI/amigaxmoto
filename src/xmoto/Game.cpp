@@ -117,6 +117,10 @@ void GameApp::quit(void) {
 /*===========================================================================
 Init
 ===========================================================================*/
+#if defined(__amigaos__)
+extern "C" void amiga_screens_snapshot(void);
+#endif
+
 void GameApp::_InitWin(bool bInitGraphics) {
   /* Init SDL */
   if (bInitGraphics == false) {
@@ -126,6 +130,9 @@ void GameApp::_InitWin(bool bInitGraphics) {
     /* No graphics mojo here, thank you */
     return;
   } else {
+#if defined(__amigaos__)
+    amiga_screens_snapshot(); /* see amiga/amiga_screens.c */
+#endif
     if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO) < 0)
       throw Exception("(2) SDL_Init : " + std::string(SDL_GetError()));
   }
