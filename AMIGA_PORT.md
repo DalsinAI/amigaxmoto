@@ -59,7 +59,8 @@ input and the window are SDL 2's, unchanged.
 - From the OpenGPU kit: libSDL2.a, libSDL2_mixer.a, libSDL2_ttf.a and
   libGL.a.
 - Cross-built static libraries in /mnt/amigachrome/team2/deps/m68k-amigaos
-  (sh /mnt/amigachrome/team2/deps/build-m68k-libs.sh zlib|png|jpeg|sqlite|xml2,
+  (sh amiga/deps/build-m68k-libs.sh zlib|png|jpeg|sqlite|xml2; copy
+  amiga/deps/sqlite/*.c into the SQLite 3.46.1 amalgamation's folder first,
   one at a time, -j2): zlib 1.3.1, libpng 1.6.43, IJG jpeg 9f, SQLite
   3.46.1 and libxml2 2.12.9 (parser and tree only). SQLite has its own
   file system on dos.library (amiga_vfs.c: Open/Read/Write/Seek/
