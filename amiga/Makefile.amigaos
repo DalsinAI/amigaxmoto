@@ -106,6 +106,7 @@ package: $(OUT)/$(PROG) $(BUILD)/xmoto.bin $(ICONS) AMIGA_PORT.md COPYING
 	rm -rf $(OUT)/data/Textures/Musics $(OUT)/data/Textures/Fonts
 	cp -R bin/Textures/Musics bin/Textures/Fonts $(OUT)/data/Textures/
 	cp AMIGA_PORT.md $(OUT)/ReadMe
+	cp amiga/Controls $(OUT)/Controls
 	cp COPYING $(OUT)/COPYING.txt
 	cp amiga/icons/XMoto.info amiga/icons/ReadMe.info amiga/icons/COPYING.txt.info $(OUT)/
 	cp amiga/icons/XMoto-drawer.info $(DIST)/XMoto.info

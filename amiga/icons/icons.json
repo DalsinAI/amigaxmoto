@@ -9,7 +9,10 @@
     {
       "file": "XMoto.info",
       "kind": "tool",
-      "stack": 1048576
+      "stack": 1048576,
+      "toolTypes": [
+        "(FULLSCREEN)"
+      ]
     },
     {
       "file": "ReadMe.info",
