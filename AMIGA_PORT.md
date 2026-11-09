@@ -116,7 +116,7 @@ Flags: -noixemul -m68040 -m68881 -O2 -std=gnu++11 -fpermissive (as
 upstream) and GCC 16's -fno-tree-loop-distribute-patterns. The program
 and every object pass fpcr_check.py (GCC 16's float-to-int store).
 
-Icons: amiga/icons/icons.json, from the game's own icon (extra/xmoto.png):
+Icons: amiga/icons/icons.json, from our own GlowIcon art (amiga/icons/art/xmoto.svg):
 
     python3 AMICRADLE/scripts/port_icons.py amiga/icons/icons.json --out amiga/icons
 

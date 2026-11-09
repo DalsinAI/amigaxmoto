@@ -108,7 +108,6 @@ package: $(OUT)/$(PROG) $(BUILD)/xmoto.bin $(ICONS) AMIGA_PORT.md COPYING
 	cp AMIGA_PORT.md $(OUT)/ReadMe
 	cp COPYING $(OUT)/COPYING.txt
 	cp amiga/icons/XMoto.info amiga/icons/ReadMe.info amiga/icons/COPYING.txt.info $(OUT)/
-	cd $(OUT) && find . -mindepth 1 -type d | while read d; do cp $(CURDIR)/amiga/icons/Data.info "$$d.info"; done
 	cp amiga/icons/XMoto-drawer.info $(DIST)/XMoto.info
 
 $(OBJDIR)/amiga/%.o: amiga/%.c
