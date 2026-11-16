@@ -15,16 +15,34 @@ HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT=$(CDPATH= cd -- "$HERE/.." && pwd)
 PREFIX=$1 WORK=$2
 shift 2
-mkdir -p "$PREFIX" "$WORK"
-cp -R "$STOVE/m68k-amigaos/port-deps/include" "$STOVE/m68k-amigaos/port-deps/lib" "$PREFIX/"
-# Everything newer than this is built here, for build-amiga.sh's FPU check
-# (the stove's own copies are its business).
-sleep 1; touch "$PREFIX/.stove-copied"
-
 fetch() { # name url sha256
 	[ -f "$WORK/$1" ] || curl -fsSL --retry 3 -o "$WORK/$1" "$2"
 	echo "$3  $WORK/$1" | sha256sum -c - > /dev/null || { echo "$1: not the pinned SHA-256 $3"; exit 1; }
 }
+
+mkdir -p "$PREFIX" "$WORK"
+
+# DEPCACHE (build-amiga.sh sets it with CCACHE=1): the finished PREFIX is
+# kept as a tar named for the SHA-256 of everything that makes it (these
+# scripts, the port's recipes, the names asked for and the compiler), so a
+# second stove build needn't rebuild libxml2 and SQLite on a busy daletop.
+KEY=""
+if [ -n "${DEPCACHE:-}" ]; then
+	KEY=$( { cat "$HERE/deps.sh" "$ROOT/amiga/deps/build-m68k-libs.sh"; find "$ROOT/amiga/deps" -type f -name '*.c' | sort | xargs -r cat;
+		echo "$@"; "$STOVE/bin/m68k-amigaos-gcc" --version; } | sha256sum | cut -c1-64)
+	if [ -f "$DEPCACHE/$KEY.tar" ]; then
+		tar -xf "$DEPCACHE/$KEY.tar" -C "$PREFIX"
+		echo "deps.sh: $* from $DEPCACHE/$KEY.tar"
+		for lib in "$@"; do [ "$lib" != pak64 ] || fetch_pak64=1; done
+		[ -z "${fetch_pak64:-}" ] || set -- pak64
+		[ -n "${fetch_pak64:-}" ] || exit 0
+		KEY=""
+	fi
+fi
+[ -f "$PREFIX/.stove-copied" ] || cp -R "$STOVE/m68k-amigaos/port-deps/include" "$STOVE/m68k-amigaos/port-deps/lib" "$PREFIX/"
+# Everything newer than this is built here, for build-amiga.sh's FPU check
+# (the stove's own copies are its business).
+[ -f "$PREFIX/.stove-copied" ] || { sleep 1; touch "$PREFIX/.stove-copied"; }
 
 for lib in "$@"; do
 	case $lib in
@@ -52,3 +70,6 @@ for lib in "$@"; do
 	esac
 	STOVE="$STOVE" DEPS="$WORK" PREFIX="$PREFIX" sh "$ROOT/amiga/deps/build-m68k-libs.sh" "$lib"
 done
+if [ -n "$KEY" ]; then
+	mkdir -p "$DEPCACHE" && tar -cf "$DEPCACHE/$KEY.tar.part" -C "$PREFIX" . && mv "$DEPCACHE/$KEY.tar.part" "$DEPCACHE/$KEY.tar"
+fi

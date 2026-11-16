@@ -55,6 +55,7 @@ DEPWORK="$BUILD/deps-src"
 if [ -n "${DEPLIBS:-}" ]; then
 	DEPS="$BUILD/deps"
 	# shellcheck disable=SC2086
+	[ "${CCACHE:-}" != 1 ] || export DEPCACHE=${DEPCACHE:-/home/da1ek/AmiCradle-dev/teams/team2/scratch/ccache-ports/deps}
 	STOVE="$STOVE" sh "$HERE/deps.sh" "$DEPS" "$DEPWORK" $DEPLIBS > "$OUT/deps-output.txt" 2>&1 ||
 		{ tail -n 40 "$OUT/deps-output.txt"; exit 1; }
 fi
