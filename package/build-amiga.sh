@@ -52,7 +52,6 @@ GPUSDK=${GPUSDK:-/home/da1ek/AmiCradle-dev/scratch/rc-20261115/gpu-sdk/GFOpenGPU
 # own DEPS, beside a copy of the stove's port-deps.
 DEPS="$SDK/port-deps"
 DEPWORK="$BUILD/deps-src"
-touch "$BUILD/deps-stamp"
 if [ -n "${DEPLIBS:-}" ]; then
 	DEPS="$BUILD/deps"
 	# shellcheck disable=SC2086
@@ -61,6 +60,15 @@ if [ -n "${DEPLIBS:-}" ]; then
 fi
 set -- STOVE="$STOVE" CPU="$CPU" SDL2KIT="$SDK" KIT="$SDK" DEPS="$DEPS" NDK="$SDK/include"
 [ -z "${MAKEVARS:-}" ] || eval "set -- \"\$@\" $MAKEVARS"
+# port.env's CCACHE=1: a port too big for the stove's 900 s compiles through
+# ccache (CCACHE_DIR, by default Team 2's on daletop), so a second build
+# finishes what the first one started. The objects are the compiler's own.
+if [ "${CCACHE:-}" = 1 ] && command -v ccache > /dev/null; then
+	export CCACHE_DIR=${CCACHE_DIR:-/home/da1ek/AmiCradle-dev/teams/team2/scratch/ccache-ports}
+	export CCACHE_BASEDIR="$SRC" CCACHE_NOHASHDIR=1
+	mkdir -p "$CCACHE_DIR"
+	set -- "$@" CC="ccache $STOVE/bin/m68k-amigaos-gcc" CXX="ccache $STOVE/bin/m68k-amigaos-g++"
+fi
 ( cd "$SRC" && make -f amiga/Makefile.amigaos -j"$JOBS" "$@" all && \
 	make -f amiga/Makefile.amigaos "$@" dist ) \
 	> "$OUT/build-output.txt" 2>&1 || { tail -n 60 "$OUT/build-output.txt"; exit 1; }
@@ -73,7 +81,7 @@ if grep -E 'm68k-amigaos-g(cc|\+\+) ' "$OUT/build-output.txt" | grep -E ' -c | -
 	echo "a compile or link without -m68040 -msoft-float"; exit 1
 fi
 ! grep -q -- '-m68881' "$OUT/build-output.txt" || { echo "-m68881 is in the build"; exit 1; }
-{ find "$SRC/build" -name '*.o'; [ ! -d "$BUILD/deps/lib" ] || find "$BUILD/deps/lib" -name '*.a' -newer "$BUILD/deps-stamp"; } |
+{ find "$SRC/build" -name '*.o'; [ ! -d "$BUILD/deps/lib" ] || find "$BUILD/deps/lib" -name '*.a' -newer "$BUILD/deps/.stove-copied"; } |
 	sort > "$BUILD/objects.txt"
 [ -s "$BUILD/objects.txt" ] || { echo "no objects under build/"; exit 1; }
 # package/fpu-allow.txt, when there is one, names C constant tables (which

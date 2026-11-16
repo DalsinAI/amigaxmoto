@@ -17,6 +17,9 @@ PREFIX=$1 WORK=$2
 shift 2
 mkdir -p "$PREFIX" "$WORK"
 cp -R "$STOVE/m68k-amigaos/port-deps/include" "$STOVE/m68k-amigaos/port-deps/lib" "$PREFIX/"
+# Everything newer than this is built here, for build-amiga.sh's FPU check
+# (the stove's own copies are its business).
+sleep 1; touch "$PREFIX/.stove-copied"
 
 fetch() { # name url sha256
 	[ -f "$WORK/$1" ] || curl -fsSL --retry 3 -o "$WORK/$1" "$2"
