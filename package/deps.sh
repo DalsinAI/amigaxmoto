@@ -4,7 +4,8 @@
 # PREFIX gets the stove's port-deps (zlib, libpng, jpeg, FreeType) and then
 # each NAME, built soft float for the 68040 by the port's own
 # amiga/deps/build-m68k-libs.sh. Each source is fetched at its pinned
-# SHA-256 into WORK (nothing fetched is kept in the repository); bzip2 and
+# SHA-256 into WORK (nothing fetched is kept in the repository; zlib
+# replaces the stove's); bzip2 and
 # FreeType are the tarballs already kept in amiga/deps. pak64 is Simutrans'
 # graphics set (the zip, at WORK/simupak64-125-0.zip).
 # STOVE is the stove's prefix (bin/m68k-amigaos-gcc). MIT, Copyright (c)
@@ -24,6 +25,12 @@ fetch() { # name url sha256
 
 for lib in "$@"; do
 	case $lib in
+	zlib)
+		# The stove's zconf.h defines a lower-case far, which C++ code using
+		# far as a name (LinCity-NG) can't compile with; zlib's own doesn't.
+		fetch zlib-1.3.1.tar.gz https://zlib.net/fossils/zlib-1.3.1.tar.gz \
+			9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23
+		tar -xzf "$WORK/zlib-1.3.1.tar.gz" -C "$WORK" ;;
 	xml2)
 		fetch libxml2-2.12.9.tar.xz https://download.gnome.org/sources/libxml2/2.12/libxml2-2.12.9.tar.xz \
 			59912db536ab56a3996489ea0299768c7bcffe57169f0235e7f962a91f483590
