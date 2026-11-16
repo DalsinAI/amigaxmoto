@@ -76,8 +76,12 @@ fi
 { find "$SRC/build" -name '*.o'; [ ! -d "$BUILD/deps/lib" ] || find "$BUILD/deps/lib" -name '*.a' -newer "$BUILD/deps-stamp"; } |
 	sort > "$BUILD/objects.txt"
 [ -s "$BUILD/objects.txt" ] || { echo "no objects under build/"; exit 1; }
+# package/fpu-allow.txt, when there is one, names C constant tables (which
+# fpu_check can't tell from functions), one "OBJECT SYMBOL  # why" a line.
+set --
+[ ! -f "$HERE/fpu-allow.txt" ] || set -- --allow "$HERE/fpu-allow.txt"
 # shellcheck disable=SC2046
-python3 "$HERE/fpu_check.py" "$STOVE/bin/m68k-amigaos-objdump" "$STOVE/bin/m68k-amigaos-c++filt" \
+python3 "$HERE/fpu_check.py" "$STOVE/bin/m68k-amigaos-objdump" "$STOVE/bin/m68k-amigaos-c++filt" "$@" \
 	$(cat "$BUILD/objects.txt") > "$OUT/fpu-check.txt" || { grep '^FAIL' "$OUT/fpu-check.txt"; exit 1; }
 # The drawer's program is stripped: its symbols are in the build's PROG.debug.
 SYMS="$SRC/build/amigaos/$PROG.debug"

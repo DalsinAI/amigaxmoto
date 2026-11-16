@@ -128,6 +128,14 @@ check(fpu_check.is_data("__ZN4Math13sineWindow512E", "Math::sineWindow512"), "fp
 check(not fpu_check.is_data("__ZN4Menu4DrawEP12SDL_Renderer", "Menu::Draw(SDL_Renderer*)"),
       "fpu_check fails an FPU instruction in a C++ function")
 
+allow = PKG / "fpu-allow.txt"
+if allow.exists():
+    for line in allow.read_text().splitlines():
+        if line.strip() and not line.startswith("#"):
+            words, _, why = line.partition("#")
+            check(len(words.split()) == 2 and why.strip() != "", f"fpu-allow.txt: OBJECT SYMBOL  # why ({line})")
+    check(fpu_check.read_allow(allow.read_text()) != set(), "fpu_check reads fpu-allow.txt")
+
 with tempfile.TemporaryDirectory() as home:
     r = subprocess.run(["sh", str(PKG / "stove-dir.sh")], capture_output=True, text=True, env={**os.environ, "HOME": home})
     check(r.stdout.strip() == f"{home}/AmiCradle/kitchen/stoves/os32-gcc16", "no stove: the kitchen path")
