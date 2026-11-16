@@ -1,17 +1,17 @@
 #!/bin/sh
 # Cross-builds the static libraries the Team's ports share (zlib, libpng,
-# IJG jpeg, sqlite3, libxml2) for AmigaOS 3.x, 68040/68060 + FPU, libnix,
+# IJG jpeg, sqlite3, libxml2) for AmigaOS 3.x, 68040 and 68060 (soft float, so with or without an FPU), libnix,
 # into $PREFIX (include/ and lib/). Run one library at a time:
 #   sh build-m68k-libs.sh zlib|png|jpeg|sqlite|xml2
 # -j2 at most: the build machine is short of memory.
 set -e
-STOVE=${STOVE:-$HOME/CradleLab/toolchain/openamigagcc-16.2.0-open4-x86_64-linux}
+STOVE=${STOVE:-$HOME/AmiCradle/kitchen/stoves/os32-gcc16/prefix}
 DEPS=${DEPS:-/mnt/amigachrome/team2/deps}
 PREFIX=${PREFIX:-$DEPS/m68k-amigaos}
 CC=$STOVE/bin/m68k-amigaos-gcc
 AR=$STOVE/bin/m68k-amigaos-ar
 RANLIB=$STOVE/bin/m68k-amigaos-ranlib
-CFLAGS="-noixemul -m68040 -m68881 -O2 -fomit-frame-pointer -fno-tree-loop-distribute-patterns"
+CFLAGS="-noixemul -m68040 -msoft-float -O2 -fomit-frame-pointer -fno-tree-loop-distribute-patterns"
 mkdir -p $PREFIX/include $PREFIX/lib
 
 objs() { # dir lib files...
