@@ -1,0 +1,7 @@
+# C constant tables in .text that objdump decodes as FPU instructions
+# (fpu_check can't tell a C table from a C function), in the libraries
+# package/deps.sh builds.
+libz.a _crc_braid_big_table  # zlib 1.3.1 crc32.c's const z_word_t crc_braid_big_table[][256]
+libxml2.a _xmltranscodetable_ISO8859_2  # libxml2 2.12.9 encoding.c's static const unsigned char tables
+libxml2.a _xmltranscodetable_ISO8859_6  # the same
+libxml2.a _xmltranscodetable_ISO8859_13  # the same

@@ -55,3 +55,5 @@ CTestTestfile.cmake
 
 # AmigaOS 3 port: the packaged drawer (make -f amiga/Makefile.amigaos)
 /dist/
+__pycache__/
+build-amiga-package/

@@ -1,0 +1,19 @@
+{
+  "name": "X-Moto",
+  "version": "0.6.3-amiga4-rc1",
+  "drawer": "XMoto",
+  "program": "XMoto",
+  "cpu": "68040",
+  "fpu": true,
+  "space": 60000000,
+  "modules": [
+    "SDL2.module",
+    "SDL2_mixer.module",
+    "GL.module"
+  ],
+  "keep": [
+    "userdata"
+  ],
+  "parent": "Work:Games",
+  "badge": "../amiga/icons/art/xmoto.png"
+}
